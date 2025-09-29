@@ -10,9 +10,9 @@ Encontraras todos los archivos necesarios para la creación de una API la cual u
 
 - **app.py :** Aqui se encontrara nuestra Api, es decir aqui colocaras la estructura de tu API, las rutas y que es lo que hara esa ruta.
 
-- **.gitignore :** En este archivo iran aquellas rutas que no se subiran a git, lo que pueden ser entornos de desarrollo, credenciales o archivos .venv
+- **.gitignore :** En este archivo iran aquellas rutas que no se subiran a git, lo que pueden ser entornos de desarrollo, credenciales o archivos .venv, etc
 
-- **/templates :** En esta ruta ira tu index.html  que es donde tentras tu aplicacion web la cual vera el usuario
+- **/templates :** En esta ruta ira tu index.html que es donde tentras tu aplicación web la cual vera el usuario
 
 - **/static :** Se usara para alojar tu logica en JS en caso de necesitarlo.
 
@@ -28,4 +28,12 @@ gunicorn --reload [nombre_del_archivo]:[variable_de_la_app]
 - Servidor local en la red: POdran tener acceso los dispositivos conectados a la misma red que tu (LAN), se usará el comando:
 ```bash
 gunicorn --reload --bind 0.0.0.0:8000 [nombre_del_archivo]:[variable_de_la_app]
+```
+
+### Para deploy
+
+Para poder deployar una API de este tipo necesiatras ingresar el comnado 
+
+```bash
+web app:gunicorn
 ```
