@@ -7,7 +7,7 @@ from flask import Flask, request, render_template, jsonify
 from PIL import Image
 import numpy as np
 
-# Configuration
+# Configuración
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
@@ -19,9 +19,9 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 
 def rgb_to_grayscale(img_np: np.ndarray) -> np.ndarray:
-    """Convert an RGB image numpy array to a 3-channel grayscale array.
+    """Convertir un arreglo numpy de imagen RGB a una imagen en escala de grises de 3 canales.
 
-    Keeps the output shape identical to the input (H, W, 3).
+    Mantiene la forma de salida idéntica a la entrada (H, W, 3).
     """
     if img_np.ndim == 3:
         R, G, B = img_np[..., 0], img_np[..., 1], img_np[..., 2]
@@ -31,10 +31,10 @@ def rgb_to_grayscale(img_np: np.ndarray) -> np.ndarray:
 
 
 def sobel_filter(img_np: np.ndarray) -> np.ndarray:
-    """Apply a simple Sobel magnitude filter to a grayscale image array.
+    """Aplicar un filtro Sobel (magnitud del gradiente) a una imagen en escala de grises.
 
-    The function expects an HxWx3 array, converts it to single-channel
-    and computes the gradient magnitude, returning a 3-channel uint8 image.
+    La función espera un arreglo HxWx3, lo convierte a un único canal y calcula la
+    magnitud del gradiente, devolviendo una imagen uint8 de 3 canales.
     """
     img_gray = rgb_to_grayscale(img_np)[..., 0]
     Kx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=np.float32)
@@ -62,41 +62,42 @@ def apply_full_transformation(
     mirror: bool,
     flip: bool,
 ) -> Tuple[Image.Image, Tuple[float, float, float, float, float, float]]:
-    """Apply affine transformations and return (transformed_image, pil_2x3_matrix).
+    """Aplicar transformaciones afines y devolver (imagen_transformada, matriz_2x3_pil).
 
-    The matrix is returned in PIL's 6-tuple format: (a, b, e, c, d, f).
+    La matriz se devuelve en el formato de tupla de 6 elementos de PIL: (a, b, e, c, d, f).
     """
-    # Start with identity homogeneous matrix
+    # >>> OPERACIÓN MATRIZ: iniciar con la matriz homogénea identidad (3x3)
     M = np.eye(3)
 
-    # Scale
+    # >>> OPERACIÓN MATRIZ: matriz de escalado S y composición M = S @ M
     S = np.array([[scale, 0, 0], [0, scale, 0], [0, 0, 1]])
     M = S @ M
 
-    # Mirror / flip via sign on diagonal
+    # >>> OPERACIÓN MATRIZ: aplicar reflexión horizontal/vertical (invertir signos diagonales)
     if mirror:
         M[0, 0] *= -1
     if flip:
         M[1, 1] *= -1
 
-    # Rotation
+    # >>> OPERACIÓN MATRIZ: construir matriz de rotación R y componer M = R @ M
     cos_r = np.cos(rotation)
     sin_r = np.sin(rotation)
     R = np.array([[cos_r, -sin_r, 0], [sin_r, cos_r, 0], [0, 0, 1]])
     M = R @ M
 
-    # Shear
+    # >>> OPERACIÓN MATRIZ: matriz de cizallamiento H y composición M = H @ M
     H = np.array([[1, shearX, 0], [shearY, 1, 0], [0, 0, 1]])
     M = H @ M
 
     width, height = img.size
     cx, cy = width / 2.0, height / 2.0
 
-    # Compute center offset so rotation/scale occurs around image center
+    # >>> OPERACIÓN MATRIZ: calcular desplazamiento desde el centro transformado y construir la tupla 2x3 para PIL
     center_transformed = M @ np.array([cx, cy, 1.0])
     e = tx + (cx - center_transformed[0])
     f = ty + (cy - center_transformed[1])
 
+    # Matriz 2x3 en formato PIL: (a, b, e, c, d, f)
     transform_matrix_pil = (M[0, 0], M[0, 1], e, M[1, 0], M[1, 1], f)
 
     transformed_img = img.transform(
@@ -113,7 +114,7 @@ def index():
 
 @app.route('/api/process', methods=['POST'])
 def process_image_api():
-    """API endpoint that accepts transformation parameters and returns processed image and matrix."""
+    """Punto de entrada API que recibe parámetros de transformación y devuelve imagen procesada y la matriz."""
     img_path = os.path.join('static', 'Stark.jpg')
     if not os.path.exists(img_path):
         return jsonify({'error': 'Imagen "Stark.jpg" no encontrada en /static'}), 500

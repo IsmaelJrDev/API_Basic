@@ -6,7 +6,7 @@
     <title>Filtros y Transformaciones Dinámicas (8 Controles)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-    /* Estilos custom para thumb de range y display de matriz */
+    /* Estilos personalizados para el thumb del range y visualización de la matriz */
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -73,7 +73,7 @@
             </div>
 
             <div class="mb-6 p-4 bg-blue-50 border border-blue-300 rounded-lg shadow-md">
-                <h3 class="text-xl font-semibold text-blue-800 mb-2">Matriz Afín 2x3 (a, b, e | c, d, f)</h3>
+                <h3 class="text-xl font-semibold text-blue-800 mb-2">Matriz</h3>
                 <div id="matrix-display">
                     <span id="mat-a" class="matrix-cell font-bold">a</span>
                     <span id="mat-b" class="matrix-cell font-bold">b</span>
@@ -131,13 +131,13 @@
                     <p class="mt-3">Cargando imagen inicial o procesando...</p>
                 </div>
             </div>
-            <p class="text-sm text-gray-500 mt-3">*La imagen base ("Stark.jpg") debe estar en la carpeta 'static'.</p>
+            <p class="text-sm text-gray-500 mt-3">.</p>
         </div>
     </div>
 
 
     <script type="text/javascript">
-    // Referencias DOM
+    // Referencias al DOM
         const rotationSlider = document.getElementById('rotationSlider');
         const rotationValueSpan = document.getElementById('rotationValue');
         const scaleSlider = document.getElementById('scaleSlider');
@@ -157,7 +157,7 @@
         const resultImage = document.getElementById('result-image');
         const loadingText = document.getElementById('loading-text');
 
-        // Matriz de Transformación
+    // Elementos de la matriz de transformación
         const matA = document.getElementById('mat-a');
         const matB = document.getElementById('mat-b');
         const matE = document.getElementById('mat-e');
@@ -166,7 +166,7 @@
         const matF = document.getElementById('mat-f');
 
 
-        // Lógica de eventos y API
+    // Lógica de eventos y llamadas a la API
         const sliders = [
             { slider: rotationSlider, span: rotationValueSpan },
             { slider: scaleSlider, span: scaleValueSpan },
@@ -176,7 +176,7 @@
             { slider: shearYSlider, span: shearYValueSpan },
         ];
         
-    // Debounce para evitar múltiples llamadas rápidas al servidor
+    // Debounce: evitar llamadas rápidas consecutivas al servidor
         let timeoutId;
         function debounceApply() {
             clearTimeout(timeoutId);
@@ -201,6 +201,7 @@
         function updateMatrixDisplay(matrix) {
             // La matriz es un array de 6 elementos: [a, b, e, c, d, f]
             if (matrix && matrix.length === 6) {
+                // >>> OPERACIÓN MATRIZ (frontend): índice 0=a,1=b,2=e,3=c,4=d,5=f
                 matA.textContent = matrix[0].toFixed(4); // a
                 matB.textContent = matrix[1].toFixed(4); // b
                 matE.textContent = matrix[2].toFixed(4); // e (TX)
@@ -233,6 +234,7 @@
                 flip: flipToggle.checked,
                 toggleSobel: toggleSobel.checked
             };
+            // >>> OPERACIÓN MATRIZ (frontend): estos parámetros se envían al backend y determinan la matriz (a,b,e,c,d,f)
 
             try {
                 // 2. Enviar los parámetros a la API de Flask
