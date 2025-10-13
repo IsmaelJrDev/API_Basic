@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filtros y Transformaciones Dinámicas (8 Controles)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+    /* Estilos custom para thumb de range y display de matriz */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2563EB; /* blue-600 */
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2563EB; /* blue-600 */
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+        }
+    /* Estilo para la matriz de 3 columnas */
+        #matrix-display {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+        .matrix-cell {
+            text-align: center;
+            padding: 4px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col items-center p-8 min-h-screen">
+    
+    <h1 class="text-4xl font-extrabold text-gray-900 mb-10 border-b-4 border-blue-500 pb-2">
+        🛠️ 8 Transformaciones Matriciales + Filtros
+    </h1>
+
+    <div class="flex flex-col lg:flex-row w-full max-w-7xl bg-white shadow-2xl rounded-xl overflow-hidden">
+
+        <div class="lg:w-1/3 p-6 border-b lg:border-r lg:border-b-0 border-gray-200 bg-gray-50/50">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Controles Dinámicos (8 Transformaciones)</h2>
+
+            <div class="mb-6 grid grid-cols-2 gap-4">
+                <div class="p-3 bg-yellow-50 border border-yellow-300 rounded-lg shadow-md">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" id="toggleSobel" checked class="h-5 w-5 text-yellow-600 rounded focus:ring-yellow-500" onchange="applyTransformationsAndFilters()">
+                        <span class="text-md font-semibold text-gray-800">Filtro Sobel</span>
+                    </label>
+                </div>
+                <div class="p-3 bg-red-50 border border-red-300 rounded-lg shadow-md">
+                    <label class="flex items-center space-x-3 font-medium text-gray-700">
+                        <input type="checkbox" id="mirrorToggle" class="h-4 w-4 text-red-600 rounded focus:ring-red-500" onchange="applyTransformationsAndFilters()">
+                        <span>Reflexión Horizontal</span>
+                    </label>
+                    <label class="flex items-center space-x-3 font-medium text-gray-700 mt-2">
+                        <input type="checkbox" id="flipToggle" class="h-4 w-4 text-red-600 rounded focus:ring-red-500" onchange="applyTransformationsAndFilters()">
+                        <span>Reflexión Vertical</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-6 p-4 bg-blue-50 border border-blue-300 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold text-blue-800 mb-2">Matriz Afín 2x3 (a, b, e | c, d, f)</h3>
+                <div id="matrix-display">
+                    <span id="mat-a" class="matrix-cell font-bold">a</span>
+                    <span id="mat-b" class="matrix-cell font-bold">b</span>
+                    <span id="mat-e" class="matrix-cell font-bold">e (TX)</span>
+                    <span id="mat-c" class="matrix-cell font-bold">c</span>
+                    <span id="mat-d" class="matrix-cell font-bold">d</span>
+                    <span id="mat-f" class="matrix-cell font-bold">f (TY)</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                
+                <div class="control-group">
+                    <label for="rotationSlider" class="font-medium text-gray-700">Rotación (<span id="rotationValue" class="text-blue-600 font-bold">0</span>°)</label>
+                    <input type="range" id="rotationSlider" min="0" max="360" value="0" step="1" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+                </div>
+                <div class="control-group">
+                    <label for="scaleSlider" class="font-medium text-gray-700">Escala (<span id="scaleValue" class="text-blue-600 font-bold">1.0</span>x)</label>
+                    <input type="range" id="scaleSlider" min="0.1" max="2.0" value="1.0" step="0.01" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+                </div>
+                <div class="control-group">
+                    <label for="translateXSlider" class="font-medium text-gray-700">Traslación X (<span id="translateXValue" class="text-blue-600 font-bold">0</span>px)</label>
+                    <input type="range" id="translateXSlider" min="-200" max="200" value="0" step="1" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+                </div>
+                <div class="control-group">
+                    <label for="translateYSlider" class="font-medium text-gray-700">Traslación Y (<span id="translateYValue" class="text-blue-600 font-bold">0</span>px)</label>
+                    <input type="range" id="translateYSlider" min="-200" max="200" value="0" step="1" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+                </div>
+                <div class="control-group">
+                    <label for="shearXSlider" class="font-medium text-gray-700">Cizallamiento X (<span id="shearXValue" class="text-blue-600 font-bold">0.0</span>)</label>
+                    <input type="range" id="shearXSlider" min="-1.0" max="1.0" value="0.0" step="0.01" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+                </div>
+                <div class="control-group">
+                    <label for="shearYSlider" class="font-medium text-gray-700">Cizallamiento Y (<span id="shearYValue" class="text-blue-600 font-bold">0.0</span>)</label>
+                    <input type="range" id="shearYSlider" min="-1.0" max="1.0" value="0.0" step="0.01" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <button id="applySobelBtn" class="mt-8 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg transition duration-200">
+                Aplicar Cambios Manualmente
+            </button>
+        </div>
+
+        <div class="lg:w-2/3 p-6 flex flex-col items-center justify-center bg-gray-100">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Resultado de la Transformación</h2>
+            
+            <div class="relative max-w-full max-h-full bg-white p-4 rounded-lg shadow-xl flex items-center justify-center">
+                <img id="result-image" src="" alt="Imagen Procesada" class="max-w-full max-h-[70vh] object-contain border border-gray-300 rounded-md" style="display: none;">
+                
+                <div id="loading-text" class="text-gray-500 p-10 flex flex-col items-center justify-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-3">Cargando imagen inicial o procesando...</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-3">*La imagen base ("Stark.jpg") debe estar en la carpeta 'static'.</p>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+    // Referencias DOM
+        const rotationSlider = document.getElementById('rotationSlider');
+        const rotationValueSpan = document.getElementById('rotationValue');
+        const scaleSlider = document.getElementById('scaleSlider');
+        const scaleValueSpan = document.getElementById('scaleValue');
+        const translateXSlider = document.getElementById('translateXSlider');
+        const translateXValueSpan = document.getElementById('translateXValue');
+        const translateYSlider = document.getElementById('translateYSlider');
+        const translateYValueSpan = document.getElementById('translateYValue');
+        const shearXSlider = document.getElementById('shearXSlider');
+        const shearXValueSpan = document.getElementById('shearXValue');
+        const shearYSlider = document.getElementById('shearYSlider');
+        const shearYValueSpan = document.getElementById('shearYValue');
+        const mirrorToggle = document.getElementById('mirrorToggle');
+        const flipToggle = document.getElementById('flipToggle');
+        const toggleSobel = document.getElementById('toggleSobel');
+        const applySobelBtn = document.getElementById('applySobelBtn');
+        const resultImage = document.getElementById('result-image');
+        const loadingText = document.getElementById('loading-text');
+
+        // Matriz de Transformación
+        const matA = document.getElementById('mat-a');
+        const matB = document.getElementById('mat-b');
+        const matE = document.getElementById('mat-e');
+        const matC = document.getElementById('mat-c');
+        const matD = document.getElementById('mat-d');
+        const matF = document.getElementById('mat-f');
+
+
+        // Lógica de eventos y API
+        const sliders = [
+            { slider: rotationSlider, span: rotationValueSpan },
+            { slider: scaleSlider, span: scaleValueSpan },
+            { slider: translateXSlider, span: translateXValueSpan },
+            { slider: translateYSlider, span: translateYValueSpan },
+            { slider: shearXSlider, span: shearXValueSpan },
+            { slider: shearYSlider, span: shearYValueSpan },
+        ];
+        
+    // Debounce para evitar múltiples llamadas rápidas al servidor
+        let timeoutId;
+        function debounceApply() {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(applyTransformationsAndFilters, 150);
+        }
+
+    // Asignar eventos a los sliders (con debounce)
+        sliders.forEach(({ slider, span }) => {
+            slider.oninput = () => {
+                span.textContent = slider.value;
+                debounceApply(); 
+            };
+        });
+
+    // Eventos de cambio inmediato para checkboxes y botón
+        toggleSobel.onchange = applyTransformationsAndFilters;
+        mirrorToggle.onchange = applyTransformationsAndFilters;
+        flipToggle.onchange = applyTransformationsAndFilters;   
+        applySobelBtn.onclick = applyTransformationsAndFilters; 
+
+
+        function updateMatrixDisplay(matrix) {
+            // La matriz es un array de 6 elementos: [a, b, e, c, d, f]
+            if (matrix && matrix.length === 6) {
+                matA.textContent = matrix[0].toFixed(4); // a
+                matB.textContent = matrix[1].toFixed(4); // b
+                matE.textContent = matrix[2].toFixed(4); // e (TX)
+                matC.textContent = matrix[3].toFixed(4); // c
+                matD.textContent = matrix[4].toFixed(4); // d
+                matF.textContent = matrix[5].toFixed(4); // f (TY)
+            } else {
+                matA.textContent = '---';
+                matB.textContent = '---';
+                matE.textContent = '---';
+                matC.textContent = '---';
+                matD.textContent = '---';
+                matF.textContent = '---';
+            }
+        }
+
+        async function applyTransformationsAndFilters() {
+            loadingText.style.display = 'flex';
+            resultImage.style.display = 'none';
+
+            // Recopilar parámetros de transformación y estado de filtros
+            const params = {
+                rotation: rotationSlider.value,
+                scale: scaleSlider.value,
+                translateX: translateXSlider.value,
+                translateY: translateYSlider.value,
+                shearX: shearXSlider.value,
+                shearY: shearYSlider.value,
+                mirror: mirrorToggle.checked,
+                flip: flipToggle.checked,
+                toggleSobel: toggleSobel.checked
+            };
+
+            try {
+                // 2. Enviar los parámetros a la API de Flask
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(params)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 3. Mostrar la imagen y la matriz
+                    resultImage.src = data.image_data;
+                    resultImage.width = data.width;
+                    resultImage.height = data.height;
+
+                    updateMatrixDisplay(data.matrix); // <-- Actualizar la matriz
+
+                    resultImage.style.display = 'block';
+                    loadingText.style.display = 'none';
+                } else {
+                    // Manejo de errores
+                    loadingText.innerHTML = `<p class="text-red-500">Error: ${data.error || 'Verifica la consola.'}</p>`;
+                    updateMatrixDisplay(null);
+                    console.error('API Error:', data.error);
+                }
+            } catch (error) {
+                loadingText.innerHTML = `<p class="text-red-500">Error de conexión con la API de Python.</p>`;
+                updateMatrixDisplay(null);
+                console.error('Fetch Error:', error);
+            }
+        }
+        
+        // Inicializar la imagen al cargar el DOM
+        document.addEventListener('DOMContentLoaded', () => {
+             // Muestra los valores iniciales de las barras deslizantes
+             sliders.forEach(({ slider, span }) => span.textContent = slider.value);
+             // Inicia el proceso de carga y muestra la imagen base
+             applyTransformationsAndFilters();
+        });
+    </script>
+</body>
+</html>
