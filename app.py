@@ -107,6 +107,102 @@ def apply_full_transformation(
     return transformed_img, transform_matrix_pil
 
 
+# -------------------------
+# Helpers para ejemplos
+# -------------------------
+def rotation_matrix(theta: float) -> np.ndarray:
+    """Construir matriz homogénea 3x3 de rotación para ángulo en radianes."""
+    return np.array([[np.cos(theta), -np.sin(theta), 0.0], [np.sin(theta), np.cos(theta), 0.0], [0.0, 0.0, 1.0]])
+
+
+def scale_matrix(s: float) -> np.ndarray:
+    """Construir matriz homogénea 3x3 de escala uniforme."""
+    return np.array([[s, 0.0, 0.0], [0.0, s, 0.0], [0.0, 0.0, 1.0]])
+
+
+def shear_matrix(sx: float, sy: float) -> np.ndarray:
+    """Construir matriz homogénea 3x3 de cizallamiento (shearX, shearY)."""
+    return np.array([[1.0, sx, 0.0], [sy, 1.0, 0.0], [0.0, 0.0, 1.0]])
+
+
+def reflection_matrix(mirror: bool, flip: bool) -> np.ndarray:
+    """Construir matriz homogénea 3x3 para reflejos horizontales/verticales."""
+    M = np.eye(3)
+    if mirror:
+        M[0, 0] = -1.0
+    if flip:
+        M[1, 1] = -1.0
+    return M
+
+
+def compose_matrices(*mats: np.ndarray) -> np.ndarray:
+    """Componer matrices homogéneas en el orden dado: resultado = mats[0] @ mats[1] @ ...
+
+    Nota: en el resto del código usamos M = A @ M para componer por la izquierda. Aquí
+    aplicamos el orden directo para claridad.
+    """
+    if not mats:
+        return np.eye(3)
+    M = np.eye(3)
+    for mat in mats:
+        M = mat @ M
+    return M
+
+
+def linear_and_pil_from_homogeneous(M: np.ndarray) -> Tuple[list, tuple]:
+    """Extraer la parte lineal 2x2 y formar la tupla PIL (a,b,e,c,d,f) con e=f=0."""
+    a = float(M[0, 0])
+    b = float(M[0, 1])
+    c = float(M[1, 0])
+    d = float(M[1, 1])
+    linear = [[a, b], [c, d]]
+    pil_tuple = (a, b, 0.0, c, d, 0.0)
+    return linear, pil_tuple
+
+
+@app.route('/api/matrix_example', methods=['POST'])
+def matrix_example():
+    """Endpoint de ejemplo que devuelve matrices para varios casos: rotación pura, rotación+escala,
+    rotación+escala+shear y mirror antes de rotar. Recibe JSON con campos opcionales:
+    { rotation(deg), scale, shearX, shearY, mirror, flip }
+    """
+    data = request.get_json() or {}
+    rot_deg = float(data.get('rotation', 45.0))
+    rot = np.deg2rad(rot_deg)
+    s = float(data.get('scale', 1.0))
+    sx = float(data.get('shearX', 0.0))
+    sy = float(data.get('shearY', 0.0))
+    mirror = bool(data.get('mirror', False))
+    flip = bool(data.get('flip', False))
+
+    # Rotación pura
+    R = rotation_matrix(rot)
+    rot_linear, rot_pil = linear_and_pil_from_homogeneous(R)
+
+    # Rotación + escala (aplicamos S primero, luego R como en tu flujo)
+    S = scale_matrix(s)
+    RS = compose_matrices(R, S)
+    rs_linear, rs_pil = linear_and_pil_from_homogeneous(RS)
+
+    # Rotación + escala + shear (S luego R luego H)
+    H = shear_matrix(sx, sy)
+    RSH = compose_matrices(H, R, S)
+    rsh_linear, rsh_pil = linear_and_pil_from_homogeneous(RSH)
+
+    # Mirror antes de rotar
+    M_ref = reflection_matrix(mirror, flip)
+    MrefR = compose_matrices(R, M_ref)
+    mref_linear, mref_pil = linear_and_pil_from_homogeneous(MrefR)
+
+    return jsonify({
+        'rotation_deg': rot_deg,
+        'rotation_only': {'linear': rot_linear, 'pil': [round(v, 6) for v in rot_pil]},
+        'rotation_scale': {'linear': rs_linear, 'pil': [round(v, 6) for v in rs_pil]},
+        'rotation_scale_shear': {'linear': rsh_linear, 'pil': [round(v, 6) for v in rsh_pil]},
+        'mirror_then_rotate': {'linear': mref_linear, 'pil': [round(v, 6) for v in mref_pil]},
+    })
+
+
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
